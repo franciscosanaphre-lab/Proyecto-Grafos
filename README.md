@@ -38,3 +38,4 @@ Instalación de Pygame:
 
 ```bash
 pip install pygame
+```
