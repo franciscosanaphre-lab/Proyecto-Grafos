@@ -39,3 +39,7 @@ Instalación de Pygame:
 ```bash
 pip install pygame
 ```
+
+Bibliografía:
+Todos los algoritmos excepto el algoritmo para detectar si la gráfica es conexa (creado por mi) fueron tomados de "Introduction to Graph Theory - Robin.J Wilson"
+https://webhomes.maths.ed.ac.uk/~v1ranick/papers/wilsongraph.pdf
