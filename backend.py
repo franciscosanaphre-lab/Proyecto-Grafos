@@ -2,11 +2,19 @@ import math
 import random
 import copy
 
+# Diccionario de vértices: {id: (x, y)}
 vertices = {}
+# Lista de aristas: [(u, v), (u2, v2), ...]
 edges = []
+# Diccionario de grados de cada vértice: {id: grado}
 degrees = {}
 
 def default_settings():
+    """
+    Reinicia el estado interno del backend:
+    - Limpia vértices, aristas y grados.
+    Se usa cuando quieres empezar una nueva gráfica desde cero.
+    """
     global vertices
     global edges
     global degrees
@@ -16,10 +24,29 @@ def default_settings():
     degrees.clear()
 
 def add_vertex(id,coords):
+    """
+    Agrega un vértice al grafo.
+
+    Parámetros
+    ----------
+    id : int
+        Identificador del vértice.
+    coords : tuple(int, int)
+        Coordenadas (x, y) del vértice en la pantalla.
+    """
     vertices[id] = coords
     print(f"Added vertex: 'id:{id} | coords: {coords}")
 
 def add_edge(edge):
+    """
+    Agrega una arista (u, v) al grafo si no existe ya.
+    También evita agregar la arista si existe la versión invertida (v, u).
+
+    Parámetros
+    ----------
+    edge : tuple(int, int)
+        Par (u, v) que representa la arista.
+    """
     if edge in edges:
         return 
     
@@ -32,6 +59,15 @@ def add_edge(edge):
     print("added edge:",edge)
         
 def calculate_edges_weight():
+    """
+    Calcula la longitud (peso) de cada arista usando distancia euclidiana
+    entre las coordenadas de sus vértices.
+
+    Retorna
+    -------
+    dict
+        Diccionario { (u, v): distancia } con dos decimales.
+    """
     weighted_edges = {}
 
     print("Edges:", edges)
@@ -54,10 +90,31 @@ def calculate_edges_weight():
     return weighted_edges
 
 def select_random_vertices():
+    """
+    Selecciona 2 vértices aleatorios del diccionario 'vertices'.
+
+    Retorna
+    -------
+    list
+        Lista de 2 elementos, cada uno es (id, (x, y)) como item() de un dict.
+    """
     print("vertices:",vertices)
     return random.sample(list(vertices.items()), k=2)
 
 def get_adyacent_edges(id):
+    """
+    Obtiene todas las aristas adyacentes a un vértice dado.
+
+    Parámetros
+    ----------
+    id : int
+        Identificador del vértice.
+
+    Retorna
+    -------
+    list
+        Lista de aristas (u, v) donde 'id' aparece en la arista.
+    """
     adyacent = []
     for edge in edges:
         #print("ID:",id," in:",edge,"==",id in edge)
@@ -67,6 +124,26 @@ def get_adyacent_edges(id):
     return adyacent
 
 def closest_vertices(start,adyacent, owidths, permanent_values):
+    """
+    Dado un vértice 'start', sus aristas adyacentes y los pesos de las aristas,
+    calcula el peso temporal de cada vértice adyacente (Dijkstra).
+
+    Parámetros
+    ----------
+    start : int
+        Vértice desde el cual se evalúa.
+    adyacent : list
+        Aristas adyacentes a 'start'.
+    owidths : dict
+        Diccionario {(u, v): peso} de las aristas.
+    permanent_values : dict
+        Distancias definitivas ya fijadas para ciertos vértices.
+
+    Retorna
+    -------
+    list
+        Lista de tuplas (vertex, peso_temporal) ordenada por peso.
+    """
     weighted_vertices= []
 
     pstart = permanent_values[start] # Peso del vector inicial desde donde estamo evaluando
@@ -87,11 +164,26 @@ def closest_vertices(start,adyacent, owidths, permanent_values):
 
         weighted_vertices.append((vertex,temp_weight))
 
+    # Ordena por el peso (segunda componente)
     weighted_vertices.sort(key=lambda e:e[1])
 
     return weighted_vertices
 
 def closest_from_temporal(temporal_values):
+    """
+    A partir del diccionario de valores temporales (Dijkstra),
+    obtiene el vértice con menor peso.
+
+    Parámetros
+    ----------
+    temporal_values : dict
+        {vertex: peso_temporal}
+
+    Retorna
+    -------
+    tuple
+        (vertex, peso) con el menor peso.
+    """
     values = []
     for vertex in temporal_values:
         nvertex = (vertex,temporal_values[vertex]) # (1,20)
@@ -103,17 +195,36 @@ def closest_from_temporal(temporal_values):
     return values[0]
 
 def dijkstra_algorithm(start,end):
+    """
+    Implementación del algoritmo de Dijkstra para encontrar el camino más corto
+    entre 'start' y 'end' en el grafo actual.
 
+    Parámetros
+    ----------
+    start : int
+        Vértice origen.
+    end : int
+        Vértice destino.
+
+    Retorna
+    -------
+    list
+        Lista de aristas (v_actual, v_anterior) que representan la ruta desde
+        'start' hasta 'end' (reconstruida hacia atrás).
+    """
     vstart = start
 
     temporal_values = {}
     permanent_values = {}
     previous_node = {}
 
+    # Calcula los pesos de todas las aristas
     weights_dic = calculate_edges_weight()
 
+    # El vértice de inicio tiene distancia 0
     permanent_values[start] = 0
 
+    # Continúa hasta que todos los vértices hayan sido fijados como permanentes
     while len(permanent_values) < len(vertices):
 
         adyacent = get_adyacent_edges(start)
@@ -176,6 +287,7 @@ def dijkstra_algorithm(start,end):
     print("start:",vstart)
     print("end:", end)
 
+    # Reconstrucción de la ruta desde 'end' hacia 'start' usando previous_node
     while True:
         previous = previous_node[latest]
         ruta.append((latest,previous))
@@ -197,8 +309,22 @@ def dijkstra_algorithm(start,end):
 # Parte de eulerianos
 
 def is_eulerian():
+    """
+    Determina si el grafo actual es:
+    - Euleriano (todos los vértices de grado par),
+    - Semi-euleriano (exactamente 2 vértices de grado impar),
+    - O no euleriano.
+
+    Retorna
+    -------
+    (int, None | list)
+        1, None        -> Grafo euleriano (circuito euleriano).
+        2, [v1, v2]    -> Grafo semi-euleriano (camino euleriano entre v1 y v2).
+        0, None        -> No euleriano.
+    """
     degrees.clear() 
 
+    # Calcula el grado de cada vértice
     for edge in edges:
         for vertex in edge:
             if vertex in degrees:
@@ -222,6 +348,22 @@ def is_eulerian():
         return 0,None # No eulerian
 
 def get_adyacent_edges_specific(id,edges):
+    """
+    Versión local de get_adyacent_edges pero recibiendo la lista 
+    de aristas como parámetro.
+
+    Parámetros
+    ----------
+    id : int
+        Vértice para el que se buscan aristas adyacentes.
+    edges : list
+        Lista de aristas a considerar.
+
+    Retorna
+    -------
+    list
+        Lista de aristas donde aparece 'id'.
+    """
     adyacent = []
     for edge in edges:
         #print("ID:",id," in:",edge,"==",id in edge)
@@ -232,6 +374,21 @@ def get_adyacent_edges_specific(id,edges):
 
 
 def degree(vertex,edges):
+    """
+    Calcula el grado de un vértice en una lista de aristas dada.
+
+    Parámetros
+    ----------
+    vertex : int
+        Vértice cuyo grado se quiere calcular.
+    edges : list
+        Lista de aristas.
+
+    Retorna
+    -------
+    int
+        Grado del vértice.
+    """
     degree = 0
     for edge in edges:
         if vertex in edge:
@@ -240,6 +397,22 @@ def degree(vertex,edges):
     return degree
 
 def is_connected(edges, vertices):
+    """
+    Verifica si el grafo es conexo usando un recorrido recursivo
+    (basado en trayectoria).
+
+    Parámetros
+    ----------
+    edges : list
+        Lista de aristas.
+    vertices : dict
+        Diccionario de vértices {id: coords} solo para saber qué vértices hay.
+
+    Retorna
+    -------
+    bool
+        True si el grafo es conexo, False si es disconexo.
+    """
     if len(edges) == 0:
         print("Edges vacio")
         return False
@@ -266,6 +439,19 @@ def is_connected(edges, vertices):
         
 
 def trayectoria(original_vertex, t,edges):
+    """
+    Recorre recursivamente el grafo desde 'original_vertex',
+    añadiendo vértices alcanzables a la lista t.
+
+    Parámetros
+    ----------
+    original_vertex : int
+        Vértice desde el que se inicia o continúa el recorrido.
+    t : list
+        Lista que acumula los vértices visitados.
+    edges : list
+        Lista de aristas a considerar.
+    """
     if original_vertex not in t:
         t.append(original_vertex)
 
@@ -286,17 +472,54 @@ def trayectoria(original_vertex, t,edges):
             trayectoria(adyacent_vertex,t,edges)
 
 def get_vertex_from_edge(edge, ignore_vertex):
+    """
+    Dada una arista (u, v) y un vértice a ignorar (por ejemplo el vértice
+    actual), devuelve el otro vértice de la arista.
+
+    Parámetros
+    ----------
+    edge : tuple(int, int)
+        Arista (u, v).
+    ignore_vertex : int
+        Vértice que queremos ignorar.
+
+    Retorna
+    -------
+    int
+        El otro vértice de la arista.
+    """
     for vertex in edge:
         if vertex != ignore_vertex:
             return vertex
 
 def eulerian_circut(etype,start):
+    """
+    Implementa el algoritmo tipo Fleury para encontrar un circuito/camino
+    euleriano, dependiendo de 'etype':
 
+    etype = 1  -> grafo euleriano (se espera un circuito que inicia y termina en el mismo vértice).
+    etype = 2  -> grafo semi-euleriano (camino que inicia y termina en vértices de grado impar).
+
+    Parámetros
+    ----------
+    etype : int
+        Tipo de grafo (1 o 2, según is_eulerian).
+    start : None | list
+        Si etype = 2, contiene [v1, v2] con los vértices de grado impar.
+        Si etype = 1, se ignora y se arranca con la primera arista.
+
+    Retorna
+    -------
+    list
+        Lista de aristas (u, v) en el orden en que se recorre el camino/circuito euleriano.
+    """
     start_vertex = None
     print(etype)
     if etype == 1:
+        # Empieza en el primer vértice de la primera arista
         start_vertex = edges[0][0]
     else:
+        # Para semi-euleriano: empieza en uno de los vértices impares
         start_vertex = start[0]
         end_vertex = start[1]
 
@@ -328,6 +551,7 @@ def eulerian_circut(etype,start):
             deg = degree(start_vertex, temporal_edges) 
             print("deg:",deg, edge)
             if connected or deg ==1 : 
+                # Si deg == 1, es la única arista posible para salir
                 if deg == 1:
                     temporal_vertices.pop(start_vertex)
                 temporal_edges.remove(edge)
@@ -346,5 +570,21 @@ def eulerian_circut(etype,start):
 
 
 def find_eulerian_path(etype,start):
+    """
+    Función de conveniencia que llama a eulerian_circut si el grafo
+    es euleriano o semi-euleriano.
+
+    Parámetros
+    ----------
+    etype : int
+        Tipo de grafo (1 = euleriano, 2 = semi-euleriano).
+    start : None | list
+        Vértices de grado impar si etype = 2, o None si etype = 1.
+
+    Retorna
+    -------
+    list | None
+        Camino/circuito euleriano como lista de aristas, o None si no aplica.
+    """
     if etype == 1 or etype ==2:
         return eulerian_circut(etype,start)
