@@ -40,6 +40,9 @@ Instalación de Pygame:
 pip install pygame
 ```
 
-Bibliografía:
-Todos los algoritmos excepto el algoritmo para detectar si la gráfica es conexa (creado por mi) fueron tomados de "Introduction to Graph Theory - Robin.J Wilson"
-https://webhomes.maths.ed.ac.uk/~v1ranick/papers/wilsongraph.pdf
+## Bibliografía
+
+Todos los algoritmos utilizados en este proyecto —con excepción del algoritmo para verificar si la gráfica es conexa, el cual fue diseñado por mí— fueron tomados de:
+
+Robin J. Wilson, *Introduction to Graph Theory*.  
+Disponible en: https://webhomes.maths.ed.ac.uk/~v1ranick/papers/wilsongraph.pdf
