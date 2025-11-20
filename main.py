@@ -209,7 +209,42 @@ def inside_vertex(coords):
 
     
     return None
-            
+
+def dibujar_camino_euleriano(eulerian_path):
+
+    """
+    Dada una secuencia de aristas que forman un camino o circuito euleriano,
+    las dibuja una por una en la pantalla con un delay de 1 segundo entre cada una.
+
+    eulerian_path: lista de aristas [(v1, v2), (v2, v3), ...]
+    """
+
+    global reiniciar
+
+    for edge in eulerian_path:
+        
+        # Extrae los vértices de la arista
+        
+        v1 = edge[0]
+        v2 = edge[1]
+
+        # Extrae las coordenadas de los vértices de la arista
+
+        v1_cords = vertices[v1]
+        v2_cords = vertices[v2]
+
+        # Pone el código listo para permitir reiniciar después de dibujar el camino
+
+        reiniciar = True
+
+        # Dibuja la arista en la pantalla
+
+        pygame.draw.line(screen,DARK_BLUE, v1_cords,v2_cords,6)
+        pygame.display.update()     
+        pygame.event.pump()         
+        pygame.time.delay(1000) 
+
+    return
 
 # Loop principal de la interfaz (pygame)
 # ====================
@@ -238,123 +273,116 @@ while running:
                     drawing = False
                     menu = True
 
-                    # Define vértices para ser usados como referencia al generar caminos
-                    v1,v2 =backend.select_random_vertices()
-
                     continue
+
+                # Si no estás dibujando y estás en modo reinicio o no_euleriana,
+                # reinicia toda la gráfica y el backend.
 
                 if reiniciar or no_euleriana:
                     default_settings()
                     backend.default_settings()
 
+            # T: sólo tiene efecto si estás en modo reiniciar
+            # -----------------------------
+            # Permite buscar otro camino euleriano sin redibujar toda la gráfica
             elif event.key == pygame.K_t:
-                if reiniciar:
-                    reiniciar = False
-                    print("reiniciando")
-                    route_lines.clear()
-                    pesos_vertices.clear()
-                    eulerian_lines.clear()
+                if reiniciar == False:
+                    continue 
+                reiniciar = False
+                print("reiniciando")
+                route_lines.clear()
+                pesos_vertices.clear()
+                eulerian_lines.clear()
 
-                    drawn_circles = [
-                        (center, color, radius)
-                        for center, color, radius in drawn_circles
-                        if color == RED
-                    ]
+                drawn_circles = [
+                    (center, color, radius)
+                    for center, color, radius in drawn_circles
+                    if color == RED
+                ]
 
-                    menu = False
-                    euleriano = True
+                menu = False
+                euleriano = True
 
-                    # Redibujar la pantalla limpia antes de animar el camino euleriano
-                    screen.fill(WHITE)
+                # Redibujar la pantalla limpia antes de animar el camino euleriano
+                screen.fill(WHITE)
 
-                    # Nombres de los vértices
-                    for letra in letras:
-                        screen.blit(letra[0], letra[1])
+                # Dibuja los nombres de los vértices
+                for letra in letras:
+                    screen.blit(letra[0], letra[1])
 
-                    # Vértices
-                    for center, color, radius in drawn_circles:
-                        pygame.draw.circle(screen, color, center, radius)
+                # Vuelve a dibujar los círculos (vértices)
+                for center, color, radius in drawn_circles:
+                    pygame.draw.circle(screen, color, center, radius)
 
-                    # Aristas del grafo
-                    for origin, end in drawn_lines:
-                        pygame.draw.line(screen, BLACK, origin, end, 3)
+                # Dibuja las aristas originales
+                for origin, end in drawn_lines:
+                    pygame.draw.line(screen, BLACK, origin, end, 3)
 
-                    pygame.display.flip()
+                # Actualiza la pantalla con todos los cambios.
+                pygame.display.flip()
 
+                # Checa si el grafo es euleriano.
+                is_eulerian, start = backend.is_eulerian()
 
-                    is_eulerian, start = backend.is_eulerian()
+                # Valores de is_eulerian:
+                # 0 = no euleriano
+                # 1 = circuito euleriano
+                # 2 = camino euleriano
 
-                    print("Is eulerian:",is_eulerian)
+                print("Is eulerian:",is_eulerian)
 
-                    if is_eulerian ==0:
-                        print("No euleriano..")
-                        no_euleriana = True
-                        print("No euleriana:", no_euleriana)
-                        continue
-                    elif is_eulerian ==1 or is_eulerian ==2:
-                        no_euleriana = False
-                        eulerian_path = backend.find_eulerian_path(is_eulerian,start)
-                        print("eulerian path:",eulerian_path)
+                if is_eulerian ==0:
+                    no_euleriana = True
+                    print("No euleriana:", no_euleriana)
+                    continue
+                elif is_eulerian ==1 or is_eulerian ==2:\
+                    # Sí tiene camino/circuito euleriano
+                    no_euleriana = False
+                    eulerian_path = backend.find_eulerian_path(is_eulerian,start)
+                    print("eulerian path:",eulerian_path)
 
-                        for edge in eulerian_path:
+                    # Dibuja el camino euleriano arista por arista, con un delay
 
-                            v1 = edge[0]
-                            v2 = edge[1]
-
-                            v1_cords = vertices[v1]
-                            v2_cords = vertices[v2]
-
-                            reiniciar = True
-
-                            pygame.draw.line(screen,DARK_BLUE, v1_cords,v2_cords,6)
-                            pygame.display.update()     
-                            pygame.event.pump()         
-                            pygame.time.delay(1000) 
+                    dibujar_camino_euleriano(eulerian_path)
+                    
+                    
 
 
+            # 1: desde el menú, entra en modo “Euleriano”
 
-            elif event.key == pygame.K_1: # Euleriano
+            elif event.key == pygame.K_1: 
                 if menu:
+                    
+                    # Actualiza el estado de las instrucciones
                     menu = False
                     euleriano = True 
 
                     is_eulerian, start = backend.is_eulerian()
 
-                    print("Is eulerian:",is_eulerian)
-
                     if is_eulerian ==0:
-                        print("No euleriano..")
                         no_euleriana = True
                         print("No euleriana:", no_euleriana)
                         continue
                     elif is_eulerian ==1 or is_eulerian ==2:
+                        # Sí tiene camino/circuito euleriano
                         no_euleriana = False
                         eulerian_path = backend.find_eulerian_path(is_eulerian,start)
                         print("eulerian path:",eulerian_path)
 
-                        for edge in eulerian_path:
+                        # Dibuja el camino euleriano arista por arista, con un delay
 
-                            v1 = edge[0]
-                            v2 = edge[1]
+                        dibujar_camino_euleriano(eulerian_path)
 
-                            v1_cords = vertices[v1]
-                            v2_cords = vertices[v2]
-
-                            reiniciar = True
-
-                            pygame.draw.line(screen,DARK_BLUE, v1_cords,v2_cords,6)
-                            pygame.display.update()      # <- pinta lo que acabas de dibujar
-                            pygame.event.pump()          # <- mantiene la ventana viva (opcional)
-                            pygame.time.delay(1000) 
-
-            
-            elif event.key == pygame.K_2: # Camino mas corto
+            # 2: desde el menú, entra en modo selección de pesos (ruta más corta)
+            elif event.key == pygame.K_2:
                 if menu:
                     menu = False
                     pesos = True
                     
 
             elif event.key == pygame.K_r:
+
+                # R en modo ‘reiniciar’: limpia rutas y vuelve a modo pesos=True
 
                 if reiniciar:
                     reiniciar = False
@@ -369,23 +397,34 @@ while running:
                     pesos = True
                     continue
                         
+                
 
                 if pesos == False:
                     continue
 
                 pesos = False 
+
+                # R en modo pesos: selecciona 2 vértices aleatorios para Dijkstra
                 
-                print("R pressed")
                 rvertices = backend.select_random_vertices()
                 print("RANDOM VERTICES:",rvertices)
+
+                # Dibuja los vértices seleccionados en azul
                 for vertex in rvertices:
                     print("Random vertex:",vertex)
                     drawn_circles.append((vertex[1], BLUE, RADIUS)) 
+
+                # Genera la ruta más corta entre los 2 vértices seleccionados
                     
                 route = backend.dijkstra_algorithm(rvertices[0][0], rvertices[1][0])
 
+                # Dibuja la ruta más corta arista por arista
+
                 for edge in route:
-                    #drawn_lines.append((drawn_circles[len(drawn_circles)-1][0],vertex["coords"]))
+
+                    # Extrae los vertices de cada arista
+                    # v1: Vertice de origen
+                    # v2: Vertice de destino
 
                     v1 = edge[0]
                     v2 = edge[1]
@@ -395,35 +434,55 @@ while running:
 
                     reiniciar = True
 
+                    # Guarda las aristas en route_lines para ser dibujadas en el loop principal
+
                     route_lines.append((v1_cords, v2_cords))
             
         elif event.type == pygame.MOUSEMOTION:
+            # Actualiza la posición del mouse en todo momento
             mouse_x, mouse_y = pygame.mouse.get_pos()
             
         elif event.type == pygame.MOUSEBUTTONDOWN:
-            if event.button == 3:  # Right click (changes your location to an clicked vertex)
+            # Click derecho: "moverte" a otro vértice (cambia CURRENT_VERTEX y marca en rojo)
+            if event.button == 3:  
                 pos = event.pos
 
+
+                # Omite si no estas dibujando
                 if drawing == False:
                     continue
 
+
+                # Obtiene el vértice dentro del cual se hizo click 
+                # Pos: Posicion del mouse al hacer click derecho
+
                 vertex = inside_vertex(pos)
 
+                # Si no hizo click dentro de un vértice, omite
                 if vertex == None:
                     continue
 
-                print('appended new circle')
+                # Cambia el vértice actual 
                 CURRENT_VERTEX = vertex["id"]
                 drawn_circles.append((vertex["coords"], RED, RADIUS)) 
                 
 
-            elif event.button == 1: # Left click (Adds vertex or joins 2 vertexs by an edge)
-                 
+            # Click izquierdo: agregar vértice nuevo o conectar aristas
+
+            elif event.button == 1:
+
+                # Obtiene la posición del mouse al hacer click izquierdo
                 mouse_pos = event.pos
 
-                # Eventos de añadir vértices y aristas.
-
+                # Si estás en modo pesos, selecciona vértices para Dijkstra
                 if pesos:
+
+                    """
+                    vertex: diccionario {"id": id_vertice, "coords": (cx, cy)}
+                    1. Revisa si el click fue dentro de un vértice
+                    2. Si ya fue seleccionado, omite
+                    3. Si no, lo agrega a la lista de vértices seleccionados
+                    """
                     vertex = inside_vertex(mouse_pos)
                     
 
@@ -434,15 +493,16 @@ while running:
 
                     if vid in pesos_vertices:
                         continue
-
-   
                     
                     pesos_vertices.append(vid)
                     drawn_circles.append((vertex["coords"], BLUE, RADIUS)) 
 
-                    if len(pesos_vertices)>=2:
-                        pesos = False
+                    # Si ya hay 2 vértices seleccionados, calcula y dibuja la ruta más corta
 
+                    if len(pesos_vertices)>=2:
+
+                        # Pesos = False para evitar seleccionar más vértices
+                        pesos = False
                         route = backend.dijkstra_algorithm(pesos_vertices[0], pesos_vertices[1])
 
                         for edge in route:
@@ -459,23 +519,29 @@ while running:
 
                     
                     continue
+
                 
+                #Si estás en modo dibujo, agrega un nuevo vértice o conecta con otro
+                #vértice si el click fue dentro de uno existente.
+                
+                # Omite si no estás en modo dibujo
                 if drawing == False: 
                     continue
                 
                 vertex = inside_vertex(mouse_pos)
 
-                # Checks if your clicking on an existing vertex so it connects current vertex to the clicked vertex
-
                 if vertex != None:
                     if CURRENT_VERTEX == vertex["id"]:
                         continue
                     
+                    # Añade arista desde CURRENT_VERTEX hasta el vértice clickeado
                     backend.add_edge((CURRENT_VERTEX,vertex["id"]))
                     drawn_lines.append((drawn_circles[len(drawn_circles)-1][0],vertex["coords"]))
                     break
                 
-                # Creates the vertex label
+                # Si no hizo click dentro de un vértice existente, crea uno nuevo
+                # Genera un nuevo ID para el vértice (letra)
+                # x es una variable global que se incrementa cada vez que se crea un vértice
 
                 x +=1
 
@@ -490,9 +556,7 @@ while running:
 
                 backend.add_vertex(x,mouse_pos)
 
-                # Adds the new vertex and edge from source vertex to new vertex
-
-                
+                # Si ya había al menos un círculo, conectas el último vértice con éste
 
                 if len(drawn_circles)>0:
 
@@ -504,11 +568,16 @@ while running:
                     print("drawn circle origin:",origin_vertex)
                     drawn_lines.append((origin_vertex,mouse_pos))
 
+                # Guarda posición del vértice en el diccionario local
                 vertices[x] = mouse_pos
                 
-
+                # Dibuja el nuevo vértice en rojo
                 drawn_circles.append((mouse_pos, RED, RADIUS)) 
         
+
+    # ---------------------------
+    # RENDERIZADO DE LA ESCENA
+    # ---------------------------
 
     screen.fill(WHITE)  
 
@@ -539,11 +608,12 @@ while running:
         for instruction in reiniciar_no_euleriana_instrucciones:
             screen.blit(instruction[0], instruction[1])
 
-    # Renderiza linea que sigue el mouse
+    # Renderiza linea que sigue el mouse (arista temporal) y el circulo que sigue al mouse
 
     if drawing:
         
         if len(drawn_circles)>0:
+            # Arista temporal
             pygame.draw.line(screen,BLACK, drawn_circles[len(drawn_circles)-1][0],(mouse_x,mouse_y),3)
 
         # Renderiza el circulo que sigue al mouse
