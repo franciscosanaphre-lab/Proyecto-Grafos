@@ -4,6 +4,7 @@ import backend
 # Inicializa pygame y la ventana principal
 
 pygame.init()
+mouse_x, mouse_y = 0,0
 screen_width = 800 
 screen_height = 600
 screen = pygame.display.set_mode((screen_width, screen_height))
@@ -641,3 +642,4 @@ while running:
     pygame.display.flip()
 
 pygame.quit()
+
