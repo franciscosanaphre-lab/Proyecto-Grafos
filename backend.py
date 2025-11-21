@@ -50,7 +50,7 @@ def add_edge(edge):
     if edge in edges:
         return 
     
-    redge = (edge[1],edge[0]) # check if the same esge doesn't exist already but reversed
+    redge = (edge[1],edge[0]) # Checa si la misma arista no existe ya pero invertida
     if redge in edges:
         return
 
@@ -80,7 +80,6 @@ def calculate_edges_weight():
         print("Distance v2:",v2)
 
         distance = round(math.sqrt((vertices[v1][0]-vertices[v2][0])**2 + (vertices[v1][1]-vertices[v2][1])**2),2)
-        #weighted_edges.append({"id":edge,"weight":distance})
 
         weighted_edges[edge] = distance
     
@@ -150,6 +149,7 @@ def closest_vertices(start,adyacent, owidths, permanent_values):
 
     for edge in adyacent:
 
+        # Variable del vértice adyacente
         vertex = None
 
         # Checa cual es el vértice adyacente de la arista | vertex es la variable del vértice adyacente
@@ -236,15 +236,22 @@ def dijkstra_algorithm(start,end):
         # Actualiza los valores de temporal_values con los nuevos recien obtenidos de evaluar desde el start_vertex
         for vertex_data in new_temp_values:
             print("vertex_data:", vertex_data)
+
+            # Variable del vertice y su peso temporal
             vertex = vertex_data[0]
             vertex_weight = vertex_data[1]
-
+            
+            # Si ya es permanente, se ignora
             if vertex in permanent_values:
                 continue
+
+            # Si ya tiene un valor temporal, se compara y actualiza si es menor
             if vertex in temporal_values:
                 if temporal_values[vertex]> vertex_weight:
                     temporal_values[vertex] = vertex_weight
                     previous_node[vertex] = start
+
+            # Si no tiene valor temporal, se asigna
             else:
                 temporal_values[vertex] = vertex_weight
                 previous_node[vertex] = start
@@ -255,6 +262,7 @@ def dijkstra_algorithm(start,end):
 
         closest = closest_from_temporal(temporal_values)
 
+        # Closest es el vértice temporal con menor peso
         # closest[0] es el vertice
         # closest[1] es el peso
         
@@ -262,8 +270,7 @@ def dijkstra_algorithm(start,end):
         permanent_values[closest[0]] = closest[1]
         del temporal_values[closest[0]]
 
-        
-
+        # Se fija el nuevo vértice de inicio para la siguiente iteración
         start = closest[0]
         
         print("New Temporal: ----")
@@ -272,6 +279,8 @@ def dijkstra_algorithm(start,end):
         print(permanent_values)
 
         print("New start:",start)
+
+    # Resultados finales al finalizar el algoritmo.
 
     print("Todos los vertices han sido evaluados. Resultados:")
     print('Permanent values', permanent_values)
@@ -282,23 +291,29 @@ def dijkstra_algorithm(start,end):
 
     ruta = []
 
-    latest = end
+    latest = end # Latest es el vértice actual que se está evaluando para retroceder la ruta (por eso se comienza del final)
 
     print("start:",vstart)
     print("end:", end)
 
     # Reconstrucción de la ruta desde 'end' hacia 'start' usando previous_node
     while True:
+
+        # Obtiene el vértice anterior al actual
         previous = previous_node[latest]
+
+        # Añade la arista (latest, previous) a la ruta
         ruta.append((latest,previous))
 
-        print("previus:",previous)
+        # Si se ha llegado al vértice inicial, se detiene
         if previous == vstart:
             break 
 
+        # Actualiza latest para continuar retrocediendo
         latest = previous
 
 
+    # Ruta final.
     print("Ruta:", ruta)
 
     print(vertices)
@@ -366,7 +381,7 @@ def get_adyacent_edges_specific(id,edges):
     """
     adyacent = []
     for edge in edges:
-        #print("ID:",id," in:",edge,"==",id in edge)
+        # ID (vertice) | Checa si id está en la arista
         if id in edge:
             adyacent.append(edge)
 
@@ -416,11 +431,16 @@ def is_connected(edges, vertices):
     if len(edges) == 0:
         print("Edges vacio")
         return False
+    
+    # Toma la primera arista y un vértice de ella como punto de inicio
     redge = edges[0]
     rvertex = redge[0]
     
+    # Lista para llevar el registro de vértices alcanzables
     t_map = []
     print(rvertex)
+
+    # Realiza el recorrido desde el vértice inicial por todas las aristas adyacentes
 
     trayectoria(rvertex, t_map,edges)
     
@@ -428,6 +448,7 @@ def is_connected(edges, vertices):
 
     print(vertices)
     
+    # Si algún vértice no está en t_map, el grafo es disconexo
 
     for v in vertices:
             if v not in t_map:
@@ -452,22 +473,27 @@ def trayectoria(original_vertex, t,edges):
     edges : list
         Lista de aristas a considerar.
     """
+
+    # Añade el vértice actual a la lista si no está ya
     if original_vertex not in t:
         t.append(original_vertex)
 
-
+    # Obtiene las aristas adyacentes al vértice actual
     aedges = get_adyacent_edges_specific(original_vertex,edges)
 
+    # Recorre cada arista adyacente
     for edge in aedges:
+        # Variable del vértice adyacente
         adyacent_vertex = None 
         
+        # Checa que vértice de la arista es el adyacente (el que no es original_vertex)
         for vertex in edge:
             if vertex != original_vertex and vertex not in t:
                 adyacent_vertex = vertex
                 break 
-
+            
+        # Si se encontró un vértice adyacente no visitado, se añade a la lista t y continúa el recorrido recursivamente
         if adyacent_vertex != None:
-            #print('Adyacent vertex:',adyacent_vertex)
             t.append(adyacent_vertex)  
             trayectoria(adyacent_vertex,t,edges)
 
@@ -513,6 +539,8 @@ def eulerian_circut(etype,start):
     list
         Lista de aristas (u, v) en el orden en que se recorre el camino/circuito euleriano.
     """
+
+    # Determina el vértice inicial según el tipo de grafo
     start_vertex = None
     print(etype)
     if etype == 1:
@@ -526,43 +554,61 @@ def eulerian_circut(etype,start):
     print("Start:",start)
 
 
-    #real_start = start_vertex
+    # Copia temporal de aristas y vértices para manipular
     temporal_edges = copy.deepcopy(edges)
     temporal_vertices = copy.deepcopy(vertices)
     
-
+    # Lista de aristas ya eliminadas (recorridas)
     deleted = []
     
+    # Bucle principal para construir el camino/circuito euleriano
     while True:
+
+        # Bandera para indicar si se encontró una arista válida para recorrer
         found = False
         print("Starting loop again at:",start_vertex)
+
+        # Obtiene las aristas adyacentes al vértice actual
         adyacent = get_adyacent_edges(start_vertex)
 
+        # Recorre cada arista adyacente
         for edge in adyacent:
+            # Si la arista ya fue eliminada (recorrida), se ignora
             if edge in deleted:
                 continue
-
+            
+            # Crea una copia temporal de las aristas y elimina la arista actual
             new_edges = copy.deepcopy(temporal_edges)
             new_edges.remove(edge)
 
-            connected = is_connected(new_edges, temporal_vertices) # Checa si despues de quitar la arista el grafo sigue conexo
+            # Checa si despues de quitar la arista el grafo sigue conexo 
+            connected = is_connected(new_edges, temporal_vertices) 
             print("connected:", connected, edge)
             
+            # Calcula el grado del vértice actual en las aristas temporales
             deg = degree(start_vertex, temporal_edges) 
             print("deg:",deg, edge)
-            if connected or deg ==1 : 
-                # Si deg == 1, es la única arista posible para salir
+
+            # Si el grafo sigue conexo o el grado es 1, se puede recorrer esta arista
+            if connected or deg ==1 :   
+                # Si deg == 1, es la única arista posible para salir, entonces se toma
                 if deg == 1:
+                    # Elimina el vértice si ya no tiene aristas (para evitar problemas de conexión)
                     temporal_vertices.pop(start_vertex)
+
+                # Elimina la arista de las temporales y la añade a la lista de eliminadas
                 temporal_edges.remove(edge)
                 deleted.append(edge)
                 print("connected edge:",edge)
+                # Actualiza el vértice de inicio al otro vértice de la arista
                 old_start_vertex = start_vertex
                 found = True
                 start_vertex = get_vertex_from_edge(edge,old_start_vertex)
                 break 
         
         print("new data",found, start_vertex)
+
+        # Si no se encontró ninguna arista válida, el camino/circuito ha terminado
         if found == False:
             print('end')
            # print(deleted)
